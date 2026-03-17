@@ -1,0 +1,28 @@
+[
+  {
+    "category": "Live TV",
+    "guid": "a5f5b863-4f2a-4b2a-8d6e-1234567890ab",
+    "imageUrl": "https://raw.githubusercontent.com/yourrepo/jellyfin-plugin-xtream-codes/main/icon.png",
+    "name": "Xtream Codes Live TV",
+    "overview": "Enables Live TV via Xtream Codes API and direct M3U URL streams. Supports EPG, VOD, Catchup and category filtering.",
+    "owner": "community",
+    "versions": [
+      {
+        "changelog": "## v1.1.0\n- Added VOD (movies & series) media provider\n- Added Catchup / TV Archive support\n- Added connection test endpoint\n- Added GitHub Actions build pipeline\n\n## v1.0.0\n- Initial release: Live TV channels, EPG, M3U and Xtream Codes API",
+        "checksum": "REPLACE_WITH_MD5_OF_DLL",
+        "sourceUrl": "https://github.com/yourrepo/jellyfin-plugin-xtream-codes/releases/download/v1.1.0/Jellyfin.Plugin.XtreamCodes_1.1.0.zip",
+        "targetAbi": "10.9.0.0",
+        "timestamp": "2026-03-17T00:00:00Z",
+        "version": "1.1.0"
+      },
+      {
+        "changelog": "## v1.0.0\n- Initial release: Live TV channels, EPG, M3U and Xtream Codes API",
+        "checksum": "REPLACE_WITH_MD5_OF_DLL",
+        "sourceUrl": "https://github.com/yourrepo/jellyfin-plugin-xtream-codes/releases/download/v1.0.0/Jellyfin.Plugin.XtreamCodes_1.0.0.zip",
+        "targetAbi": "10.9.0.0",
+        "timestamp": "2026-03-01T00:00:00Z",
+        "version": "1.0.0"
+      }
+    ]
+  }
+]

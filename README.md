@@ -1,2 +1,2 @@
-# JellyXtream
-Jellyfin extension to use Xtream codes for the LiveTV component.
+JellyXtream Gateway
+A lightweight C#-based proxy that bridges Xtream Codes IPTV services with Jelyfin.

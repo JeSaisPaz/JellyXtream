@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Xtream Codes Live TV</title>
+    <style>
+        :root {
+            --accent: #00b4d8;
+            --accent-dim: rgba(0,180,216,0.15);
+            --success: #4ade80;
+            --error: #f87171;
+            --warn: #fbbf24;
+            --bg-card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.1);
+        }
+        .xc-page { max-width: 740px; margin: 0 auto; padding-bottom: 40px; }
+        .xc-header { display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+        .xc-header-icon { width:36px; height:36px; background:var(--accent-dim);
+            border-radius:8px; display:flex; align-items:center; justify-content:center;
+            font-size:18px; flex-shrink:0; }
+        .xc-page h2 { margin:0; font-size:1.3em; }
+        .xc-subtitle { color:#999; font-size:0.85em; margin:0 0 28px; }
+
+        /* Section label */
+        .sec { font-size:0.7em; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+            color:#666; margin:28px 0 10px; display:flex; align-items:center; gap:8px; }
+        .sec::after { content:''; flex:1; height:1px; background:var(--border); }
+
+        /* Fields */
+        .field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+        .field label { font-size:0.82em; color:#bbb; }
+        .field small { color:#777; font-size:0.85em; }
+        .field input[type=text], .field input[type=url],
+        .field input[type=password], .field input[type=number],
+        .field select {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: inherit;
+            border-radius: 5px;
+            padding: 9px 11px;
+            font-size: 0.88em;
+            transition: border-color .15s;
+        }
+        .field input:focus, .field select:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        /* Toggle row */
+        .toggle-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+        .toggle-row label { font-size:0.88em; cursor:pointer; }
+
+        /* Connection test panel */
+        #testPanel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius:8px;
+            padding: 14px 16px;
+            margin-bottom:18px;
+        }
+        #testPanel .test-btn-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        #testPanel .test-result {
+            margin-top:12px; padding:10px 14px; border-radius:6px;
+            font-size:0.83em; display:none; line-height:1.6;
+        }
+        #testPanel .test-result.success { background:rgba(74,222,128,.1); border:1px solid rgba(74,222,128,.3); color: var(--success); }
+        #testPanel .test-result.error   { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.3); color: var(--error); }
+        #testPanel .test-result.warn    { background:rgba(251,191,36,.1);  border:1px solid rgba(251,191,36,.3);  color: var(--warn); }
+        .result-grid { display:grid; grid-template-columns:auto 1fr; column-gap:14px; row-gap:3px; }
+        .result-grid .lbl { color:#aaa; font-weight:600; }
+
+        /* Generated URLs */
+        .url-box { background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+            padding:12px 14px; font-size:0.78em; word-break:break-all; }
+        .url-box .url-row { display:grid; grid-template-columns:70px 1fr; gap:6px; align-items:start; margin-bottom:6px; }
+        .url-box .url-row:last-child { margin-bottom:0; }
+        .url-box .url-label { color:#888; padding-top:2px; }
+        .url-box code { color:var(--accent); }
+
+        /* Tabs for mode */
+        .mode-tabs { display:flex; gap:2px; margin-bottom:16px; }
+        .mode-tab {
+            flex:1; text-align:center; padding:8px; border-radius:6px;
+            border:1px solid var(--border); cursor:pointer; font-size:0.85em;
+            background:transparent; color:#999; transition:all .15s;
+        }
+        .mode-tab.active {
+            background:var(--accent-dim); border-color:var(--accent); color:var(--accent); font-weight:600;
+        }
+
+        .btn-test  { padding:8px 18px; border-radius:5px; border:1px solid var(--accent);
+            background:var(--accent-dim); color:var(--accent); cursor:pointer; font-size:0.85em; }
+        .btn-test:hover { background:rgba(0,180,216,.25); }
+        .btn-test:disabled { opacity:.4; cursor:default; }
+        .btn-save  { width:100%; padding:11px; border-radius:6px; border:none;
+            background:var(--accent); color:#000; font-weight:700; font-size:0.95em; cursor:pointer; margin-top:24px; }
+        .btn-save:hover { filter:brightness(1.1); }
+        #saveSpinner { display:none; }
+    </style>
+</head>
+<body>
+<div id="XtreamCodesConfigPage" data-role="page" class="page" data-require="emby-input,emby-button,emby-select">
+<div data-role="content">
+<div class="content-primary xc-page">
+
+    <div class="xc-header">
+        <div class="xc-header-icon">📡</div>
+        <div>
+            <h2>Xtream Codes Live TV</h2>
+        </div>
+    </div>
+    <p class="xc-subtitle">Connect Jellyfin to an Xtream Codes IPTV provider — Live TV, EPG, Catchup and VOD.</p>
+
+    <!-- ── INPUT MODE ──────────────────────────────────── -->
+    <div class="sec">Input Mode</div>
+    <div class="mode-tabs">
+        <button class="mode-tab active" id="tabApi"  onclick="setMode('api')">🔑 API Credentials</button>
+        <button class="mode-tab"       id="tabM3u"   onclick="setMode('m3u')">📋 Direct M3U URL</button>
+    </div>
+
+    <!-- API credentials -->
+    <div id="sectionApi">
+        <div class="field">
+            <label>Server URL</label>
+            <input type="text" id="txtServerUrl" placeholder="http://provider.example.com:8080" />
+            <small>Include port if non-standard (e.g. :8080)</small>
+        </div>
+        <div class="field">
+            <label>Username</label>
+            <input type="text" id="txtUsername" autocomplete="off" />
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" id="txtPassword" autocomplete="off" />
+        </div>
+
+        <!-- Test connection -->
+        <div id="testPanel">
+            <div class="test-btn-row">
+                <button class="btn-test" id="btnTest" onclick="testConnection()">⚡ Test Connection</button>
+                <span id="testSpinner" style="display:none;color:#888;font-size:.82em">Testing…</span>
+            </div>
+            <div id="testResult" class="test-result"></div>
+        </div>
+
+        <!-- Generated URLs -->
+        <div id="urlBox" class="url-box" style="display:none; margin-bottom:18px;">
+            <div class="url-row"><span class="url-label">M3U:</span><code id="genM3u"></code></div>
+            <div class="url-row"><span class="url-label">XMLTV:</span><code id="genXmltv"></code></div>
+        </div>
+    </div>
+
+    <!-- Direct M3U -->
+    <div id="sectionM3u" style="display:none">
+        <div class="field">
+            <label>M3U Playlist URL</label>
+            <input type="url" id="txtDirectM3uUrl" placeholder="http://provider.example.com/playlist.m3u" />
+        </div>
+    </div>
+
+    <!-- ── STREAM OPTIONS ──────────────────────────────── -->
+    <div class="sec">Stream Options</div>
+    <div class="field">
+        <label>Stream Format</label>
+        <select id="selStreamFormat">
+            <option value="ts">MPEG-TS (.ts) — most compatible</option>
+            <option value="m3u8">HLS (.m3u8)</option>
+            <option value="rtmp">RTMP</option>
+        </select>
+    </div>
+
+    <!-- ── EPG ─────────────────────────────────────────── -->
+    <div class="sec">EPG / Program Guide</div>
+    <div class="toggle-row">
+        <input type="checkbox" id="chkEnableEpg" checked />
+        <label for="chkEnableEpg">Enable EPG (Electronic Program Guide)</label>
+    </div>
+    <div class="field">
+        <label>External XMLTV URL <small>(optional — overrides auto-generated)</small></label>
+        <input type="url" id="txtXmltvUrl" placeholder="http://provider.example.com/xmltv.php?…" />
+    </div>
+    <div class="field">
+        <label>EPG Timezone Offset (hours)</label>
+        <input type="number" id="numEpgOffset" min="-12" max="14" value="0" style="width:100px" />
+    </div>
+
+    <!-- ── CATCHUP ──────────────────────────────────────── -->
+    <div class="sec">Catchup / TV Archive</div>
+    <div class="toggle-row">
+        <input type="checkbox" id="chkEnableCatchup" />
+        <label for="chkEnableCatchup">Enable Catchup (timeshift replay) — requires provider support</label>
+    </div>
+
+    <!-- ── VOD ─────────────────────────────────────────── -->
+    <div class="sec">VOD — Movies &amp; Series</div>
+    <div class="toggle-row">
+        <input type="checkbox" id="chkEnableVod" />
+        <label for="chkEnableVod">Enable VOD content (movies and series)</label>
+    </div>
+
+    <!-- ── FILTERING ────────────────────────────────────── -->
+    <div class="sec">Filtering &amp; Refresh</div>
+    <div class="field">
+        <label>Category Filter <small>(comma-separated names, blank = import all)</small></label>
+        <input type="text" id="txtCategoryFilter" placeholder="News, Sports, Movies" />
+    </div>
+    <div class="field">
+        <label>Channel List Refresh Interval (hours)</label>
+        <input type="number" id="numRefreshInterval" min="1" max="168" value="24" style="width:100px" />
+    </div>
+
+    <!-- ── SAVE ─────────────────────────────────────────── -->
+    <button class="btn-save" id="btnSave" onclick="saveConfig()">
+        <span id="saveLbl">💾 Save Settings</span>
+        <span id="saveSpinner">Saving…</span>
+    </button>
+
+</div>
+</div>
+</div>
+
+<script>
+    const PLUGIN_ID = 'a5f5b863-4f2a-4b2a-8d6e-1234567890ab';
+    let currentMode = 'api';
+
+    // ── Mode toggle ──────────────────────────────────────────────────────────
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('sectionApi').style.display = mode === 'api' ? '' : 'none';
+        document.getElementById('sectionM3u').style.display = mode === 'm3u' ? '' : 'none';
+        document.getElementById('tabApi').classList.toggle('active', mode === 'api');
+        document.getElementById('tabM3u').classList.toggle('active', mode === 'm3u');
+        document.getElementById('chkUseDirectM3u') || (() => {})(); // compat
+    }
+
+    // ── Generated URLs ────────────────────────────────────────────────────────
+    function updateUrls() {
+        const s = document.getElementById('txtServerUrl').value.trim().replace(/\/$/, '');
+        const u = document.getElementById('txtUsername').value.trim();
+        const p = document.getElementById('txtPassword').value.trim();
+        const box = document.getElementById('urlBox');
+        if (!s || !u || !p) { box.style.display = 'none'; return; }
+        const eu = encodeURIComponent(u), ep = encodeURIComponent(p);
+        document.getElementById('genM3u').textContent   = `${s}/get.php?username=${eu}&password=${ep}&type=m3u_plus&output=ts`;
+        document.getElementById('genXmltv').textContent = `${s}/xmltv.php?username=${eu}&password=${ep}`;
+        box.style.display = '';
+    }
+    ['txtServerUrl','txtUsername','txtPassword'].forEach(id =>
+        document.getElementById(id).addEventListener('input', updateUrls));
+
+    // ── Connection test ────────────────────────────────────────────────────────
+    async function testConnection() {
+        const serverUrl = document.getElementById('txtServerUrl').value.trim();
+        const username  = document.getElementById('txtUsername').value.trim();
+        const password  = document.getElementById('txtPassword').value.trim();
+
+        if (!serverUrl || !username || !password) {
+            showResult('error', '⚠️ Please fill in Server URL, Username and Password first.');
+            return;
+        }
+
+        document.getElementById('btnTest').disabled = true;
+        document.getElementById('testSpinner').style.display = '';
+        document.getElementById('testResult').style.display = 'none';
+
+        try {
+            const params = new URLSearchParams({ serverUrl, username, password });
+            const res  = await ApiClient.ajax({
+                type: 'GET',
+                url: ApiClient.getUrl(`XtreamCodes/TestConnection?${params}`)
+            });
+
+            if (res.Success) {
+                const exp = res.ExpiryDate
+                    ? new Date(parseInt(res.ExpiryDate, 10) * 1000).toLocaleDateString()
+                    : '∞';
+                showResult('success',
+                    `<div class="result-grid">
+                        <span class="lbl">Status</span><span>✅ ${res.AccountStatus}</span>
+                        <span class="lbl">Expiry</span><span>${exp}</span>
+                        <span class="lbl">Connections</span><span>${res.ActiveCons} / ${res.MaxConnections}</span>
+                        <span class="lbl">Timezone</span><span>${res.ServerTimezone || '—'}</span>
+                    </div>`);
+            } else {
+                showResult(res.AccountStatus ? 'warn' : 'error',
+                    `⚠️ ${res.Message}`);
+            }
+        } catch (e) {
+            showResult('error', `❌ Request failed: ${e.message || e}`);
+        } finally {
+            document.getElementById('btnTest').disabled = false;
+            document.getElementById('testSpinner').style.display = 'none';
+        }
+    }
+
+    function showResult(type, html) {
+        const el = document.getElementById('testResult');
+        el.className = `test-result ${type}`;
+        el.innerHTML = html;
+        el.style.display = '';
+    }
+
+    // ── Load config ────────────────────────────────────────────────────────────
+    document.getElementById('XtreamCodesConfigPage').addEventListener('pageshow', function () {
+        Dashboard.showLoadingMsg();
+        ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (cfg) {
+            document.getElementById('txtServerUrl').value       = cfg.ServerUrl || '';
+            document.getElementById('txtUsername').value        = cfg.Username  || '';
+            document.getElementById('txtPassword').value        = cfg.Password  || '';
+            document.getElementById('selStreamFormat').value    = cfg.StreamFormat || 'ts';
+            document.getElementById('txtDirectM3uUrl').value    = cfg.DirectM3uUrl || '';
+            document.getElementById('chkEnableEpg').checked     = cfg.EnableEpg !== false;
+            document.getElementById('txtXmltvUrl').value        = cfg.XmltvUrl || '';
+            document.getElementById('numEpgOffset').value       = cfg.EpgTimezoneOffset || 0;
+            document.getElementById('chkEnableCatchup').checked = cfg.EnableCatchup || false;
+            document.getElementById('chkEnableVod').checked     = cfg.EnableVod || false;
+            document.getElementById('txtCategoryFilter').value  = cfg.CategoryFilter || '';
+            document.getElementById('numRefreshInterval').value = cfg.RefreshIntervalHours || 24;
+
+            setMode(cfg.UseDirectM3u ? 'm3u' : 'api');
+            updateUrls();
+            Dashboard.hideLoadingMsg();
+        });
+    });
+
+    // ── Save config ────────────────────────────────────────────────────────────
+    function saveConfig() {
+        document.getElementById('saveLbl').style.display    = 'none';
+        document.getElementById('saveSpinner').style.display = '';
+        document.getElementById('btnSave').disabled = true;
+
+        ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (cfg) {
+            cfg.ServerUrl            = document.getElementById('txtServerUrl').value;
+            cfg.Username             = document.getElementById('txtUsername').value;
+            cfg.Password             = document.getElementById('txtPassword').value;
+            cfg.StreamFormat         = document.getElementById('selStreamFormat').value;
+            cfg.UseDirectM3u         = currentMode === 'm3u';
+            cfg.DirectM3uUrl         = document.getElementById('txtDirectM3uUrl').value;
+            cfg.EnableEpg            = document.getElementById('chkEnableEpg').checked;
+            cfg.XmltvUrl             = document.getElementById('txtXmltvUrl').value;
+            cfg.EpgTimezoneOffset    = parseInt(document.getElementById('numEpgOffset').value, 10) || 0;
+            cfg.EnableCatchup        = document.getElementById('chkEnableCatchup').checked;
+            cfg.EnableVod            = document.getElementById('chkEnableVod').checked;
+            cfg.CategoryFilter       = document.getElementById('txtCategoryFilter').value;
+            cfg.RefreshIntervalHours = parseInt(document.getElementById('numRefreshInterval').value, 10) || 24;
+
+            ApiClient.updatePluginConfiguration(PLUGIN_ID, cfg).then(function () {
+                Dashboard.processPluginConfigurationUpdateResult();
+                document.getElementById('saveLbl').style.display    = '';
+                document.getElementById('saveSpinner').style.display = 'none';
+                document.getElementById('btnSave').disabled = false;
+            });
+        });
+    }
+</script>
+</body>
+</html>
